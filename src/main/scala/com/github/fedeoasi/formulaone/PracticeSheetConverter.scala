@@ -2,10 +2,16 @@ package com.github.fedeoasi.formulaone
 
 import java.io.File
 
-import com.github.fedeoasi.formulaone.GeneratePracticeCsv._
-
 object PracticeSheetConverter {
+  sealed trait ExpectedState
+  case object Driver extends ExpectedState
+  case class FirstLapNumber(driver: DriverWithLaps) extends ExpectedState
+  case class Time(number: Int, pits: Boolean, driver: DriverWithLaps) extends ExpectedState
+  case class LapNumber(driver: DriverWithLaps) extends ExpectedState
+  case class LapTime(number: Int, pits: Boolean, driver: DriverWithLaps) extends ExpectedState
+
   private val DriverRegex = "[a-zA-z]+ [A-Z]+".r
+  private val OldDriverRegex = "[A-Z]\\. [A-Z]+".r
   private val TimeRegex = "\\d+:\\d+:\\d+".r
   private val LapNumberRegex = "(\\d+)([P]?)".r
   private val LapTimeRegex = "\\d+:\\d+\\.\\d+".r
@@ -18,7 +24,8 @@ object PracticeSheetConverter {
         expectedState match {
           case state @ Driver =>
             val nextState = text match {
-              case DriverRegex() => FirstLapNumber(DriverWithLaps(text, Seq.empty))
+              case DriverRegex() | OldDriverRegex() =>
+                FirstLapNumber(DriverWithLaps(text, Seq.empty))
               case _ => state
             }
             (result, nextState)
@@ -38,7 +45,6 @@ object PracticeSheetConverter {
             text match {
               case LapNumberRegex(lap, pits) =>
                 (result, LapTime(lap.toInt, pits.contains("P"), driver))
-              case DriverRegex() => (result :+ driver, FirstLapNumber(DriverWithLaps(text, Seq.empty)))
               case v if v.contains("Page") => (result :+ driver, Driver)
               case _ => (result, state)
             }
@@ -47,7 +53,7 @@ object PracticeSheetConverter {
               case LapTimeRegex() =>
                 val driverWithLap = driver.copy(laps = driver.laps :+ Lap(number, pits, text))
                 (result, LapNumber(driverWithLap))
-              case DriverRegex() => (result :+ driver, FirstLapNumber(DriverWithLaps(text, Seq.empty)))
+              case DriverRegex() | OldDriverRegex() => (result :+ driver, FirstLapNumber(DriverWithLaps(text, Seq.empty)))
               case _ => (result, state)
             }
         }

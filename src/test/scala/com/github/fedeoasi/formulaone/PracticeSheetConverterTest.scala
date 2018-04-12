@@ -8,6 +8,27 @@ import org.scalatest.{FunSpec, Matchers}
 import scalaj.http.Http
 
 class PracticeSheetConverterTest extends FunSpec with Matchers with TemporaryFiles {
+  it("converts the 2017 Italian FP2 sheet") {
+    val inputURL = "https://www.fia.com/file/61024/download?token=bUJqfvnt"
+
+    val response = Http(inputURL).header("User-Agent", "scalaj-http").asBytes
+    response.is2xx shouldBe true
+
+    withTmpFile("ita2017", ".pdf") { tmpFile =>
+      val outputStream = new FileOutputStream(tmpFile.toFile)
+      outputStream.write(response.body)
+      val drivers = PracticeSheetConverter.convert(tmpFile.toFile)
+      outputStream.close()
+      drivers.size shouldBe 20
+      val stoffel = drivers.head
+      stoffel.name shouldBe "S. VANDOORNE"
+      stoffel.laps.size shouldBe 30
+      val pascal = drivers.last
+      pascal.name shouldBe "P. WEHRLEIN"
+      pascal.laps.size shouldBe 25
+    }
+  }
+
   it("converts the 2018 Bahrain FP2 sheet") {
     val inputURL = "https://www.fia.com/file/66971/download?token=9ajeKTMP"
 

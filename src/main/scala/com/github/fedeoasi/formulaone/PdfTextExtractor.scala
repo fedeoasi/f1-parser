@@ -17,7 +17,7 @@ object PdfTextExtractor {
   }
 
   def groupIntoChunks(positions: Seq[PdfText]): Seq[PdfText] = {
-    val threshold = 15
+    val threshold = 10
     val (chunks, lastChunk) = positions.foldLeft((Seq.empty[PdfText], None: Option[PdfText])) { case ((result, prev), curr) =>
       prev match {
         case Some(p) =>
