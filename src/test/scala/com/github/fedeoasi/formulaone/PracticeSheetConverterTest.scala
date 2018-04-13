@@ -22,9 +22,11 @@ class PracticeSheetConverterTest extends FunSpec with Matchers with TemporaryFil
       drivers.size shouldBe 20
       val stoffel = drivers.head
       stoffel.name shouldBe "S. VANDOORNE"
+      stoffel.number shouldBe 2
       stoffel.laps.size shouldBe 30
       val pascal = drivers.last
       pascal.name shouldBe "P. WEHRLEIN"
+      pascal.number shouldBe 94
       pascal.laps.size shouldBe 25
     }
   }
@@ -43,9 +45,11 @@ class PracticeSheetConverterTest extends FunSpec with Matchers with TemporaryFil
       drivers.size shouldBe 20
       val stoffel = drivers.head
       stoffel.name shouldBe "Stoffel VANDOORNE"
+      stoffel.number shouldBe 2
       stoffel.laps.size shouldBe 35
       val valtteri = drivers.last
       valtteri.name shouldBe "Valtteri BOTTAS"
+      valtteri.number shouldBe 77
       valtteri.laps.size shouldBe 31
     }
   }

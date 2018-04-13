@@ -18,14 +18,15 @@ object PracticeSheetConverter {
 
   def convert(inputFile: File): Seq[DriverWithLaps] = {
     val chunks = PdfTextExtractor.extractText(inputFile)
+    val numberByDriver = buildDriversByNumber(chunks)
     val initialState = (Seq.empty[DriverWithLaps], Driver: ExpectedState)
       val (drivers, _) = chunks.foldLeft(initialState) { case ((result, expectedState), chunk) =>
         val text = chunk.value
         expectedState match {
           case state @ Driver =>
             val nextState = text match {
-              case DriverRegex() | OldDriverRegex() =>
-                FirstLapNumber(DriverWithLaps(text, Seq.empty))
+              case DriverRegex() | OldDriverRegex() if numberByDriver.contains(text) =>
+                FirstLapNumber(DriverWithLaps(text, numberByDriver(text), Seq.empty))
               case _ => state
             }
             (result, nextState)
@@ -53,11 +54,22 @@ object PracticeSheetConverter {
               case LapTimeRegex() =>
                 val driverWithLap = driver.copy(laps = driver.laps :+ Lap(number, pits, text))
                 (result, LapNumber(driverWithLap))
-              case DriverRegex() | OldDriverRegex() => (result :+ driver, FirstLapNumber(DriverWithLaps(text, Seq.empty)))
+              case DriverRegex() | OldDriverRegex() if numberByDriver.contains(text) => (result :+ driver, FirstLapNumber(DriverWithLaps(text, numberByDriver(text), Seq.empty)))
               case _ => (result, state)
             }
         }
       }
       drivers
     }
+
+  private def buildDriversByNumber(chunks: Seq[PdfText]): Map[String, Int] = {
+    chunks.sliding(2).flatMap {
+      case Seq(c1, c2) =>
+        c2.value match {
+          case DriverRegex() | OldDriverRegex() if c1.value.forall(_.isDigit) => Seq(c2.value -> c1.value.toInt)
+          case _ => Seq.empty
+        }
+      case Seq(_) => Seq.empty
+    }.toMap
+  }
 }
